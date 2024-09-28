@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+        }
+        button {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>WebSocket Example</h1>
+<div id="messages"></div>
+<input type="text" id="messageInput" placeholder="Type a message...">
+<button id="sendButton">Send</button>
+
+<script>
+    const socket = new SockJS('/myApp'); // Connect to the WebSocket endpoint
+    const stompClient = Stomp.over(socket); // Create STOMP client
+
+    stompClient.connect({}, function (frame) {
+        console.log('Connected: ' + frame);
+
+        stompClient.subscribe('/topic/push', function (message) {
+            console.log(message); // Fixed the typo from "conlose.log" to "console.log"
+            showMessage(JSON.parse(message.body));
+        });
+    });
+
+  document.getElementById('sendButton').onclick = function() {
+    const messageInput = document.getElementById('messageInput');
+    const messageText = messageInput.value;
+
+    if (messageText) {
+        const message = {
+            message: messageText,
+            localDateTime: new Date().toISOString() // Get the current date/time in ISO format
+        };
+
+        // Send the message with both text and localDateTime
+        stompClient.send('/app/message', {}, JSON.stringify(message));
+        messageInput.value = ''; // Clear the input field
+    } else {
+        alert("Please enter a message."); // Alert if the input is empty
+    }
+};
+
+
+    function showMessage(message) {
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML += `<div>${message.text}</div>`; // Append the new message
+        messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll to the latest message
+    }
+</script>
+</body>
+</html>
